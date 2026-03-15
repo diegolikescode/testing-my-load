@@ -1,0 +1,25 @@
+services:
+  # api1:
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #       restart: true
+
+  db:
+    image: "postgres:latest"
+    ports:
+      - 5432:5432
+
+    environment:
+      POSTGRES_USER: bololo
+      POSTGRES_PASSWORD: haha
+      POSTGRES_DB: shakeit
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '2G'
