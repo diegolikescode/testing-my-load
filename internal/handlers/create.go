@@ -5,12 +5,13 @@ import (
 
 	"github.com/diegolikescode/testing-my-load/internal/repository"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v5"
 )
 
 type CreatePersonHandler struct {
 	validate   *validator.Validate
-	repository *repository.PersonRepository
+	repository repository.PersonRepository
 }
 
 func (h *CreatePersonHandler) validateDto(dto repository.Person) error {
@@ -23,19 +24,25 @@ func (h *CreatePersonHandler) HandleCreatePerson(c *echo.Context) error {
 	err := c.Bind(&dto)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
+		// log stuff
 		return err
 	}
 	err = h.validateDto(dto)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
+		// log stuff
 		return err
 	}
 
+	uid := uuid.NewString()
+	h.repository.Create(uid, dto.Apelido, dto.Nome, dto.Nascimento, dto.Stack)
+	c.Response().Header().Set("Location", uid)
+
+	// log stuff
 	return nil
 }
 
-func NewCreatePersonHandler() *CreatePersonHandler {
+func NewCreatePersonHandler(repo repository.PersonRepository) *CreatePersonHandler {
 	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	return &CreatePersonHandler{validate: validate}
+	return &CreatePersonHandler{validate: validate, repository: repo}
 }

@@ -1,6 +1,7 @@
 package repository
 
 type Person struct {
+	ID         string   `json:"id"`
 	Nome       string   `json:"nome" validate:"required"`
 	Apelido    string   `json:"apelido" validate:"required"`
 	Nascimento string   `json:"nascimento" validate:"required,datetime=2006/01/02"`
@@ -8,8 +9,8 @@ type Person struct {
 }
 
 type PersonRepository interface {
-	Create(name, apelido, nascimento string, stack []string) error
-	FindById(id string) *Person
-	FindByTerm(t string) *Person
+	Create(uuid, name, apelido, nascimento string, stack []string) error
+	FindByID(id string) *Person
+	FindByTerm(t string) []*Person
 	Count() int
 }

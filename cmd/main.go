@@ -1,13 +1,16 @@
 package main
 
 import (
-	"log"
+	"github.com/phuslu/log"
 
+	"github.com/diegolikescode/testing-my-load/internal/repository"
 	"github.com/diegolikescode/testing-my-load/internal/server"
 )
 
 func main() {
+	log.Info().Msg("Start application")
+	repo := repository.NewRepository()
 	server := server.NewServer()
 
-	log.Fatal(server.Start())
+	log.Fatal().Err(server.Start(repo))
 }
