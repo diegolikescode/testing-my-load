@@ -23,15 +23,22 @@ func (h *CreatePersonHandler) HandleCreatePerson(c *echo.Context) error {
 	var dto repository.Person
 	err := c.Bind(&dto)
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		c.String(http.StatusUnprocessableEntity, err.Error())
 		// log stuff
 		return err
 	}
 	err = h.validateDto(dto)
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		c.String(http.StatusUnprocessableEntity, err.Error())
 		// log stuff
 		return err
+	}
+
+	exists := h.repository.CheckIfExists(dto.Apelido)
+	if exists {
+		c.Response().WriteHeader(http.StatusUnprocessableEntity)
+		// log stuff
+		return nil
 	}
 
 	uid := uuid.NewString()

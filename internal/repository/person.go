@@ -12,5 +12,6 @@ type PersonRepository interface {
 	Create(uuid, name, apelido, nascimento string, stack []string) error
 	FindByID(id string) *Person
 	FindByTerm(t string) []*Person
+	CheckIfExists(apelido string) bool
 	Count() int
 }

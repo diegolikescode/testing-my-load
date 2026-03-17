@@ -7,6 +7,7 @@ import (
 
 	"github.com/diegolikescode/testing-my-load/pkg"
 	_ "github.com/lib/pq"
+	"github.com/phuslu/log"
 )
 
 // queries
@@ -14,6 +15,7 @@ const (
 	queryCreate      = "INSERT INTO pessoas(id, apelido, nome, nascimento, stack, busca_termos) VALUES($1, $2, $3, $4, $5, $6);"
 	queryFindByID    = "SELECT apelido, nome, nascimento, stack FROM pessoas WHERE id = $1;"
 	queryFindByTermo = "SELECT id, apelido, nome, nascimento, stack FROM pessoas WHERE  busca_termos LIKE '%$1%';"
+	queryCheckExists = "SELECT EXISTS(SELECT 1 FROM pessoas WHERE apelido=$1);"
 )
 
 type Repository struct {
@@ -21,7 +23,7 @@ type Repository struct {
 	prepStmts map[string]*sql.Stmt
 }
 
-func (r Repository) setupStmts() {
+func (r *Repository) setupStmts() {
 	createStmt, err := r.db.Prepare(queryCreate)
 	if err != nil {
 		panic(fmt.Sprintf("couldnt prepare create stmt, got=%s", err))
@@ -37,24 +39,40 @@ func (r Repository) setupStmts() {
 		panic(fmt.Sprintf("couldnt prepare find by Term stmt, got=%s", err))
 	}
 
+	checkExistsStmt, err := r.db.Prepare(queryCheckExists)
+	if err != nil {
+		panic(fmt.Sprintf("couldnt prepare Check Exists stmt, got=%s", err))
+	}
+
 	r.prepStmts["create"] = createStmt
 	r.prepStmts["findById"] = findByIDStmt
 	r.prepStmts["findByTerm"] = findByTermStmt
+	r.prepStmts["checkExists"] = checkExistsStmt
 }
 
-func (r Repository) stackStr(s []string) string {
+func (r *Repository) stackStr(s []string) string {
 	return strings.Join(s, ";")
 }
 
-func (r Repository) stackSlice(s string) []string {
+func (r *Repository) stackSlice(s string) []string {
 	return strings.Split(s, ";")
 }
 
-func (r Repository) pessoaSearchTerm(apelido, nome, stackStr string) string {
+func (r *Repository) pessoaSearchTerm(apelido, nome, stackStr string) string {
 	return apelido + ";" + nome + ";" + stackStr
 }
 
-func (r Repository) Create(id, nome, apelido, nascimento string, stack []string) error {
+func (r *Repository) CheckIfExists(apelido string) bool {
+	exists := r.prepStmts["checkExists"].QueryRow(apelido)
+	var val bool
+	err := exists.Scan(&val)
+	if err != nil {
+		log.Error().Err(err)
+	}
+	return val
+}
+
+func (r *Repository) Create(id, nome, apelido, nascimento string, stack []string) error {
 	stackStr := r.stackStr(stack)
 	searchTerm := r.pessoaSearchTerm(apelido, nome, stackStr)
 	_, err := r.prepStmts["create"].Exec(id, nome, apelido, nascimento, stackStr, searchTerm)
@@ -65,7 +83,7 @@ func (r Repository) Create(id, nome, apelido, nascimento string, stack []string)
 	return nil
 }
 
-func (r Repository) FindByID(id string) *Person {
+func (r *Repository) FindByID(id string) *Person {
 	result := r.prepStmts["findById"].QueryRow(id)
 	if result.Err() != nil {
 		// log
@@ -84,7 +102,7 @@ func (r Repository) FindByID(id string) *Person {
 	return &pessoa
 }
 
-func (r Repository) FindByTerm(t string) []*Person {
+func (r *Repository) FindByTerm(t string) []*Person {
 	result, err := r.prepStmts["findByTerm"].Query(t)
 	if err != nil {
 		// log
@@ -108,7 +126,7 @@ func (r Repository) FindByTerm(t string) []*Person {
 	return pessoas
 }
 
-func (r Repository) Count() int { return 0 }
+func (r *Repository) Count() int { return 0 }
 
 func NewRepository() *Repository {
 	dbHost := pkg.GetEnvOrDieTrying("POSTGRES_HOST")
