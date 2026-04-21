@@ -12,10 +12,11 @@ import (
 
 // queries
 const (
-	queryCreate      = "INSERT INTO pessoas(id, apelido, nome, nascimento, stack, busca_termos) VALUES($1, $2, $3, $4, $5, $6);"
-	queryFindByID    = "SELECT apelido, nome, nascimento, stack FROM pessoas WHERE id = $1;"
-	queryFindByTermo = "SELECT id, apelido, nome, nascimento, stack FROM pessoas WHERE  busca_termos LIKE '%$1%';"
-	queryCheckExists = "SELECT EXISTS(SELECT 1 FROM pessoas WHERE apelido=$1);"
+	queryCreate       = "INSERT INTO pessoas(id, apelido, nome, nascimento, stack, busca_termos) VALUES($1, $2, $3, $4, $5, $6);"
+	queryFindByID     = "SELECT apelido, nome, nascimento, stack FROM pessoas WHERE id = $1;"
+	queryFindByTermo  = "SELECT id, apelido, nome, nascimento, stack FROM pessoas WHERE busca_termos LIKE $1;"
+	queryCheckExists  = "SELECT EXISTS(SELECT 1 FROM pessoas WHERE apelido=$1);"
+	queryCountPessoas = "SELECT COUNT(*) FROM pessoas;"
 )
 
 type Repository struct {
@@ -44,10 +45,16 @@ func (r *Repository) setupStmts() {
 		panic(fmt.Sprintf("couldnt prepare Check Exists stmt, got=%s", err))
 	}
 
+	countPessoasStmt, err := r.db.Prepare(queryCountPessoas)
+	if err != nil {
+		panic(fmt.Sprintf("couldnt prepare Count Pessoas stmt, got=%s", err))
+	}
+
 	r.prepStmts["create"] = createStmt
 	r.prepStmts["findById"] = findByIDStmt
 	r.prepStmts["findByTerm"] = findByTermStmt
 	r.prepStmts["checkExists"] = checkExistsStmt
+	r.prepStmts["countPeople"] = countPessoasStmt
 }
 
 func (r *Repository) stackStr(s []string) string {
@@ -103,19 +110,20 @@ func (r *Repository) FindByID(id string) *Person {
 }
 
 func (r *Repository) FindByTerm(t string) []*Person {
+	t = "%" + t + "%"
 	result, err := r.prepStmts["findByTerm"].Query(t)
 	if err != nil {
-		// log
+		log.Error().Msg("error finding by term=" + result.Err().Error())
+		return []*Person{}
 	}
 
-	var pessoas []*Person
+	pessoas := []*Person{}
 	for result.Next() {
-		// id, apelido, nome, nascimento, stack
 		var p Person
 		var stackStr string
 		err := result.Scan(&p.ID, &p.Apelido, &p.Nome, &p.Nascimento, &stackStr)
 		if err != nil {
-			// log
+			log.Error().Msg("error parsing the result into struct=" + err.Error())
 			return nil
 		}
 
@@ -126,7 +134,21 @@ func (r *Repository) FindByTerm(t string) []*Person {
 	return pessoas
 }
 
-func (r *Repository) Count() int { return 0 }
+func (r *Repository) Count() int {
+	result := r.prepStmts["countPeople"].QueryRow()
+	if result.Err() != nil {
+		log.Error().Msg("error counting people=" + result.Err().Error())
+	}
+
+	var count int
+	err := result.Scan(&count)
+	if err != nil {
+		log.Error().Msg("error counting people=" + err.Error())
+		return 0
+	}
+
+	return count
+}
 
 func NewRepository() *Repository {
 	dbHost := pkg.GetEnvOrDieTrying("POSTGRES_HOST")

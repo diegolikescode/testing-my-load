@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/diegolikescode/testing-my-load/internal/repository"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v5"
+	"github.com/phuslu/log"
 )
 
 type CreatePersonHandler struct {
@@ -23,29 +25,29 @@ func (h *CreatePersonHandler) HandleCreatePerson(c *echo.Context) error {
 	var dto repository.Person
 	err := c.Bind(&dto)
 	if err != nil {
-		c.String(http.StatusUnprocessableEntity, err.Error())
-		// log stuff
+		c.NoContent(http.StatusUnprocessableEntity)
+		log.Error().Msg(fmt.Sprintf("[CREATE] error while trying to bind the DTO err=%v with msg=%s", err, err.Error()))
 		return err
 	}
 	err = h.validateDto(dto)
 	if err != nil {
-		c.String(http.StatusUnprocessableEntity, err.Error())
-		// log stuff
+		c.NoContent(http.StatusUnprocessableEntity)
+		log.Error().Msg(fmt.Sprintf("[CREATE] error while trying to validate the DTO err=%v", err))
 		return err
 	}
 
 	exists := h.repository.CheckIfExists(dto.Apelido)
 	if exists {
+		log.Error().Msg(fmt.Sprintf("[CREATE] error while trying to validate the DTO err=%v", err))
 		c.Response().WriteHeader(http.StatusUnprocessableEntity)
-		// log stuff
 		return nil
 	}
 
 	uid := uuid.NewString()
 	h.repository.Create(uid, dto.Apelido, dto.Nome, dto.Nascimento, dto.Stack)
 	c.Response().Header().Set("Location", uid)
-
-	// log stuff
+	c.NoContent(http.StatusCreated)
+	log.Info().Msg(fmt.Sprintf("[CREATE] successfully created new user, uuid=%s", uid))
 	return nil
 }
 

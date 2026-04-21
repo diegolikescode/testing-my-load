@@ -31,13 +31,15 @@ func (s *Server) setupRoutes(repo repository.PersonRepository) {
 	findHandler := handlers.NewFindPersonHandler(repo)
 
 	s.echoServer.POST("/pessoas", createHandler.HandleCreatePerson)
-	s.echoServer.GET("pessoas/:id", findHandler.HandleFindPersonById)
+	s.echoServer.GET("pessoas/:id", findHandler.HandleFindPersonByID)
+	s.echoServer.GET("pessoas", findHandler.HandleFindPersonByTerm)
+	s.echoServer.GET("contagem-pessoas", findHandler.HandleCountPeople)
 }
 
 func (s *Server) Start(repo repository.PersonRepository) error {
 	s.setupRoutes(repo)
 
-	log.Info().Msg(fmt.Sprintf("Starting server on host %s and port %d", s.Host, s.Port))
+	log.Info().Msg(fmt.Sprintf("starting server on host %s and port %d", s.Host, s.Port))
 	return s.echoServer.Start(s.Host + ":" + strconv.Itoa(s.Port))
 }
 

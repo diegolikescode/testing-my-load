@@ -1,0 +1,28 @@
+{
+  "name": "gatling-js-demo",
+  "version": "3.13.2",
+  "private": true,
+  "type": "module",
+  "main": "target/bundle",
+  "dependencies": {
+    "@gatling.io/core": "^3.13.300",
+    "@gatling.io/http": "^3.13.300",
+    "gatling": "^2.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "@gatling.io/cli": "^3.13.300",
+    "eslint": "^9.19.0",
+    "globals": "^15.14.0",
+    "prettier": "3.4.2",
+    "rimraf": "6.0.1"
+  },
+  "scripts": {
+    "clean": "rimraf target",
+    "format": "prettier --write \"**/*.js\"",
+    "build": "gatling build",
+    "test": "gatling run",
+    "recorder": "gatling recorder",
+    "computerdatabase": "gatling run --simulation rinhabackend"
+  }
+}

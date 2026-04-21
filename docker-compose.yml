@@ -1,14 +1,50 @@
 services:
-  # api1:
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #       restart: true
+  api1: &api
+    image: "rinha2023_app:latest"
+    network_mode: "host"
+
+    environment:
+      SERVER_HOST: localhost
+      SERVER_PORT: 6969
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: bololo
+      POSTGRES_PASSWORD: haha
+      POSTGRES_DB: shakeit
+
+    entrypoint: /bin/sh -c "/app/main 2>&1 | tee /logs/container1.log"
+    volumes:
+      - ./logs:/logs
+
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '6G'
+
+  api2:
+    <<: *api
+
+    environment:
+      SERVER_HOST: localhost
+      SERVER_PORT: 4200
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: bololo
+      POSTGRES_PASSWORD: haha
+      POSTGRES_DB: shakeit
+
+    entrypoint: /bin/sh -c "/app/main 2>&1 | tee /logs/container2.log"
+    volumes:
+      - ./logs:/logs
 
   db:
     image: "postgres:latest"
-    ports:
-      - 5432:5432
+    # ports:
+    #   - 5432:5432
+    network_mode: "host"
 
     environment:
       POSTGRES_USER: bololo
@@ -26,3 +62,20 @@ services:
         limits:
           cpus: '2'
           memory: '2G'
+
+  nginx:
+    image: nginx:alpine
+    network_mode: "host"
+
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./logs/nginx:/var/log/nginx
+
+    depends_on:
+      - api1
+      - api2
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '6G'

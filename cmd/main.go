@@ -5,10 +5,13 @@ import (
 
 	"github.com/diegolikescode/testing-my-load/internal/repository"
 	"github.com/diegolikescode/testing-my-load/internal/server"
+	"github.com/diegolikescode/testing-my-load/pkg"
 )
 
 func main() {
-	log.Info().Msg("Start application")
+	go pkg.StartPprofServer()
+
+	log.Info().Msg("start application")
 	repo := repository.NewRepository()
 	server := server.NewServer()
 
