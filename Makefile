@@ -4,7 +4,7 @@ go:
 	go run ./cmd/main.go
 
 down:
-	docker compose down
+	docker compose down --remove-orphans
 
 up: down
 	docker compose up
