@@ -10,6 +10,7 @@ services:
       POSTGRES_USER: bololo
       POSTGRES_PASSWORD: haha
       POSTGRES_DB: shakeit
+      LOG_LEVEL: fatal
 
     entrypoint: /bin/sh -c "/app/main 2>&1 | tee /logs/container1.log"
     volumes:
@@ -35,6 +36,7 @@ services:
       POSTGRES_USER: bololo
       POSTGRES_PASSWORD: haha
       POSTGRES_DB: shakeit
+      LOG_LEVEL: fatal
 
     entrypoint: /bin/sh -c "/app/main 2>&1 | tee /logs/container2.log"
     volumes:

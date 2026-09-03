@@ -6,7 +6,7 @@ go:
 down:
 	docker compose down --remove-orphans
 
-up: down
+up: down build
 	docker compose up
 
 build:
@@ -24,3 +24,13 @@ gatit:
 	echo "test over, sleeping 6 and then will count people..."
 	sleep 6
 	curl http://localhost:9999/contagem-pessoas
+
+observe:
+	chmod +x $(ROOT_DIR)/scripts/observe.sh
+	$(ROOT_DIR)/scripts/observe.sh
+
+pprof-cpu:
+	mkdir -p $(ROOT_DIR)/logs
+	curl -s -o "$(ROOT_DIR)/logs/cpu-$$(date +%Y%m%dT%H%M%S).pb.gz" \
+		"http://localhost:6060/debug/pprof/profile?seconds=30"
+	@echo "saved; analyze with: go tool pprof logs/cpu-*.pb.gz"
